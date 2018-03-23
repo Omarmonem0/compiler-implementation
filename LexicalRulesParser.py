@@ -71,15 +71,18 @@ def get_punctuations_from_line(line):
 
 def parse_regular_definition(lines):
     result = {}
+    symbols = ['|', '+', '*', '(', ')']
     upper_range_start = False
     lower_range_start = False
     number_range_start = False
     hyphen_found = False
     for line in lines:
-        buffer = ''
+        rhs_buffer = ''
+        word_buffer = ''
         LHS = line.split('=')[0].strip()
         RHS = line.split('=')[1].strip()
-        for char in RHS:
+        for (index, char) in enumerate(RHS):
+            # characters Range handling (e.g a-z)
             if char == ' ':
                 continue
             elif char in upper_chars and not hyphen_found:
@@ -91,25 +94,44 @@ def parse_regular_definition(lines):
             elif char == '-':
                 hyphen_found = True
             elif upper_range_start and hyphen_found:
-                buffer += str('|'.join(upper_chars[upper_chars.index(upper_range_start):upper_chars.index(char) + 1]))
+                rhs_buffer += str('|'.join(upper_chars[upper_chars.index(upper_range_start):upper_chars.index(char) + 1]))
                 upper_range_start = False
                 hyphen_found = False
             elif lower_range_start and hyphen_found:
-                buffer += str('|'.join(lower_chars[lower_chars.index(lower_range_start):lower_chars.index(char) + 1]))
+                rhs_buffer += str('|'.join(lower_chars[lower_chars.index(lower_range_start):lower_chars.index(char) + 1]))
                 lower_range_start = False
                 hyphen_found = False
             elif number_range_start and hyphen_found:
-                buffer += str('|'.join(numbers[numbers.index(number_range_start):numbers.index(char) + 1]))
+                rhs_buffer += str('|'.join(numbers[numbers.index(number_range_start):numbers.index(char) + 1]))
                 number_range_start = False
                 hyphen_found = False
-            elif char == '|':
-                buffer += char
             else:
                 upper_range_start = False
                 lower_range_start = False
                 number_range_start = False
                 hyphen_found = False
-        result[LHS] = buffer
+
+            # predefined tokens/words handling (e.g digit+)
+            if char not in symbols:
+                word_buffer += char
+            else:
+                if word_buffer and result.get(word_buffer):
+                    rhs_buffer += '('
+                    rhs_buffer += result[word_buffer]
+                    rhs_buffer += ')'
+                    rhs_buffer += char
+                else:
+                    rhs_buffer += char
+                word_buffer = ''
+
+            # if last word in the line with no symbols (e.g letter+digit)
+            if index == (len(RHS) - 1):
+                if result.get(word_buffer):
+                    rhs_buffer += '('
+                    rhs_buffer += result[word_buffer]
+                    rhs_buffer += ')'
+
+        result[LHS] = rhs_buffer
     return result
 
 
