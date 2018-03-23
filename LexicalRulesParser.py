@@ -24,12 +24,14 @@ def start_parsing(file_name):
         if check_if_punctuations(line):
             line_punctuations = get_punctuations_from_line(line)
             punctuations.extend(line_punctuations)
-    regular_definitions = parse_regular_definition(regular_definitions_lines)
-    print(regular_expressions_lines)
-    print(regular_definitions_lines)
-    print(keywords)
-    print(punctuations)
-    print(regular_definitions)
+    regular_definitions = parse_regular_definitions(regular_definitions_lines)
+    regular_expressions = parse_regular_expressions(regular_expressions_lines, regular_definitions)
+    return {
+        'regular_expressions': regular_expressions,
+        'regular_definitions': regular_definitions,
+        'keywords': keywords,
+        'punctuations': punctuations
+    }
 
 
 def check_char_not_escaped(line, char, must_be_before):
@@ -69,7 +71,14 @@ def get_punctuations_from_line(line):
     return [x for x in modified_line]
 
 
-def parse_regular_definition(lines):
+def parse_regular_definitions(lines):
+    """
+    this function parses regular definition lines
+    accepted rules: ranges (a-m, 0-9), regex symbols (- | + * ( ))
+    no concatenation or static words are accepted as no regular definition will have ones.
+    :param lines: list of strings each represent regular definition rule
+    :return: dict with keys as tokens and values as valid regular expressions
+    """
     result = {}
     symbols = ['|', '+', '*', '(', ')']
     upper_range_start = False
@@ -79,8 +88,9 @@ def parse_regular_definition(lines):
     for line in lines:
         rhs_buffer = ''
         word_buffer = ''
-        LHS = line.split('=')[0].strip()
-        RHS = line.split('=')[1].strip()
+        equal_index = line.index('=')
+        LHS = line[:equal_index].strip()
+        RHS = line[equal_index + 1:].strip()
         for (index, char) in enumerate(RHS):
             # characters Range handling (e.g a-z)
             if char == ' ':
@@ -135,6 +145,47 @@ def parse_regular_definition(lines):
     return result
 
 
+def parse_regular_expressions(lines, regular_definitions):
+    symbols = ['+', '*', '|', '(', ')', '.']
+    result = {}
+    for line in lines:
+        rhs_buffer = ''
+        word_buffer = ''
+        skip_iteration = False
+        colon_index = line.index(':')
+        LHS = line[:colon_index].strip()
+        RHS = line[colon_index + 1:].strip()
+        for (index, char) in enumerate(RHS):
+            if skip_iteration:
+                skip_iteration = False
+                continue
+            if char == ' ':
+                continue
+            if char == '\\':
+                next_char = RHS[index + 1]
+                if next_char == 'L':
+                    rhs_buffer += '$'
+                else:
+                    rhs_buffer += next_char
+                skip_iteration = True
+                continue
+            if (char not in symbols) and (char in upper_chars or char in lower_chars):
+                word_buffer += char
+            else:
+                if word_buffer:
+                    rhs_buffer += '('
+                    if regular_definitions.get(word_buffer):
+                        # predefined regular definition
+                        rhs_buffer += regular_definitions[word_buffer]
+                    else:
+                        # static word: keep the word as is
+                        rhs_buffer += word_buffer
+                    rhs_buffer += ')'
+                # it is a symbol always push into buffer and clear the word buffer
+                rhs_buffer += char
+                word_buffer = ''
+        result[LHS] = rhs_buffer
+    return result
 
-start_parsing('inputs/lexical-rules.txt')
+print(start_parsing('inputs/lexical-rules.txt'))
 # print(upper_chars)

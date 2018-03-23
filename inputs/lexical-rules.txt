@@ -1,13 +1,15 @@
 {key keys word words}
 { wordss  }
 []/?' " [ \]
-letter = a-z | A-Z
-digit = 0 - 9
+letter = a-c | A-C
+digit = 0 - 3
 id: letter (letter|digit)*
-digits = (digit | digit)*
+digits = digit+gst
 {boolean int float}
-num: digit+ | digit+ . digits ( \L | E digits)
+num: digit+ | digit+ . digits ( \L | E.digits)
 relop: \=\= | !\= | > | >\= | < | <\=
 assign: =
   { if else while}
 hopa = letter+digit
+addop: \+ | -
+mulop: \* | /
