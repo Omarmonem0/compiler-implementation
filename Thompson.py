@@ -1,13 +1,16 @@
 from copy import deepcopy
 
 
-
 class State:
+
     def __init__(self, number):
         self.data = {
             'name': number,
             'trans': {}
         }
+
+    def __str__(self):
+        return self.data['name']
 
 
 class Nfa:
@@ -17,10 +20,13 @@ class Nfa:
     def __init__(self, character):
         self.name = ''
         self.states = []
-        self.start_state = ''
+        self.start_state = None
         self.final_states = []
         if character is not None:
             self.make_character_nfa(character)
+
+    def __str__(self):
+        return self.states
 
     def make_character_nfa(self, character):
 
