@@ -6,7 +6,7 @@ digit = 0 - 3
 id: letter (letter|digit)*
 digits = digit+gst
 {boolean int float}
-num: digit+ | digit+ . digits ( \L | E.digits)
+num: digit+ | digit+ . digits ( \L | E.digits).koko
 relop: \=\= | !\= | > | >\= | < | <\=
 assign: =
   { if else while}

@@ -92,7 +92,7 @@ def parse_regular_definitions(lines):
         LHS = line[:equal_index].strip()
         RHS = line[equal_index + 1:].strip()
         for (index, char) in enumerate(RHS):
-            # characters Range handling (e.g a-z)
+            # characters range handling (e.g a-z)
             if char == ' ':
                 continue
             elif char in upper_chars and not hyphen_found:
@@ -146,6 +146,14 @@ def parse_regular_definitions(lines):
 
 
 def parse_regular_expressions(lines, regular_definitions):
+    """
+    this function parses regular expressions lines and generates valid regular expressions
+    with no reference to other regular definitions
+    accepted rules: reference to regular definitions, regex symbols (- | + * ( ) .), static words
+    :param lines:
+    :param regular_definitions:
+    :return:
+    """
     symbols = ['+', '*', '|', '(', ')', '.']
     result = {}
     for line in lines:
@@ -156,6 +164,7 @@ def parse_regular_expressions(lines, regular_definitions):
         LHS = line[:colon_index].strip()
         RHS = line[colon_index + 1:].strip()
         for (index, char) in enumerate(RHS):
+            # backslash special characters handling
             if skip_iteration:
                 skip_iteration = False
                 continue
@@ -169,6 +178,7 @@ def parse_regular_expressions(lines, regular_definitions):
                     rhs_buffer += next_char
                 skip_iteration = True
                 continue
+            # predefined tokens/words
             if (char not in symbols) and (char in upper_chars or char in lower_chars):
                 word_buffer += char
             else:
@@ -184,6 +194,12 @@ def parse_regular_expressions(lines, regular_definitions):
                 # it is a symbol always push into buffer and clear the word buffer
                 rhs_buffer += char
                 word_buffer = ''
+            if index == (len(RHS) - 1):
+                if word_buffer:
+                    if regular_definitions.get(word_buffer):
+                        rhs_buffer += regular_definitions[word_buffer]
+                    else:
+                        rhs_buffer += word_buffer
         result[LHS] = rhs_buffer
     return result
 
