@@ -14,6 +14,7 @@ class Nfa:
     count = 0
 
     def __init__(self, character):
+        self.name = ''
         self.states = []
         self.start_state = ''
         self.final_states = []
@@ -27,7 +28,7 @@ class Nfa:
         Nfa.count += 1
         state_two = State(Nfa.count)
         state_one.data['trans'] = {
-            character: state_two.data['name']
+            character: state_two
         }
         self.start_state = state_one
         self.final_states.append(state_two)
@@ -45,15 +46,15 @@ class Nfa:
         new_end_state = State(Nfa.count)
         new_start_state.data['trans'] = {  # epsilon transition from
             #  the new start state to the old start states of nfa1 and nfa2
-            'E': [first_nfa.start_state.data['name'],  second_nfa.start_state.data['name']]
+            'E': [first_nfa.start_state,  second_nfa.start_state]
         }
         for final_state in copy_one.final_states:
             final_state.data['trans'] = {  # epsilon transition from final states to new the final state
-                'E': new_end_state.data['name']
+                'E': new_end_state
             }
         for final_state in copy_two.final_states:
             final_state.data['trans'] = {
-                'E': new_end_state.data['name']
+                'E': new_end_state
             }
         combined_nfa.start_state = new_start_state  # assigning new start state
         combined_nfa.final_states.append(new_end_state)  # assigning new end state
@@ -88,10 +89,10 @@ class Nfa:
         Nfa.count += 1
         new_final_state = State(Nfa.count)
         new_start_state.data['trans'] = {
-            'E': [new_final_state.data['name'], copy.start_state.data['name']]
+            'E': [new_final_state, copy.start_state.data]
         }
         for final_states in copy.final_states:
-            final_states.data.update({'E': [copy.start_state.data['name'], new_final_state.data['name']]})
+            final_states.data.update({'E': [copy.start_state, new_final_state]})
         for nfa_state in copy.states:  # append states of first nfa to states list of the new nfa
             new_nfa.states.append(nfa_state)
         new_nfa.start_state = new_start_state
@@ -107,34 +108,22 @@ class Nfa:
             for i in nfa_states.data['trans']:
                print('symbol: ', i, 'new state: ', nfa_states.data['trans'][i])
 
+    @staticmethod
+    def alpha(character):
+        lower = 'abcdefghijklmnopqrstuvwxyz'
+        upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        digits = '0123456789'
+        nfas = []
+        if character is "lower":
+            for c in lower:
+                nfas.append(Nfa(c))
 
+        if character is "upper":
+            for c in upper:
+                nfas.append(Nfa(c))
 
+        if character is "digits":
+            for c in digits:
+                nfas.append(Nfa(c))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return nfas
