@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 
+
 class State:
     def __init__(self, number):
         self.data = {
@@ -89,10 +90,10 @@ class Nfa:
         Nfa.count += 1
         new_final_state = State(Nfa.count)
         new_start_state.data['trans'] = {
-            'E': [new_final_state, copy.start_state.data]
+            'E': [new_final_state, copy.start_state]
         }
         for final_states in copy.final_states:
-            final_states.data.update({'E': [copy.start_state, new_final_state]})
+            final_states.data['trans'].update({'E': [copy.start_state, new_final_state]})
         for nfa_state in copy.states:  # append states of first nfa to states list of the new nfa
             new_nfa.states.append(nfa_state)
         new_nfa.start_state = new_start_state
@@ -105,8 +106,12 @@ class Nfa:
     def display(nfa):
         for nfa_states in nfa.states:
             print('state number: ', nfa_states.data['name'])
-            for i in nfa_states.data['trans']:
-               print('symbol: ', i, 'new state: ', nfa_states.data['trans'][i])
+            for key in nfa_states.data['trans']:
+                    if isinstance(nfa_states.data['trans'][key], list):
+                        for trans in nfa_states.data['trans'][key]:
+                            print('symbol: ', key, 'new state: ', trans.data['name'])
+                    else:
+                        print('symbol: ', key, 'new state: ', nfa_states.data['trans'][key].data['name'])
 
     @staticmethod
     def alpha(character):
@@ -127,3 +132,13 @@ class Nfa:
                 nfas.append(Nfa(c))
 
         return nfas
+
+    def input_symbols(self):
+        inputs = []
+        for states in self.states:
+            for trans in states.data['trans']:
+                if trans in inputs or trans is 'E':
+                    continue
+                else:
+                    inputs.append(trans)
+        return inputs
