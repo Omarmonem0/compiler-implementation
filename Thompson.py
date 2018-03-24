@@ -1,5 +1,6 @@
 from copy import deepcopy
 
+operators_list = ['|', '.', '*', ')', '(', '+']
 
 class State:
 
@@ -109,6 +110,11 @@ class Nfa:
         return new_nfa
 
     @staticmethod
+    def plus(nfa):
+        result = Nfa.concat(nfa, Nfa.klein(nfa))
+        return result
+
+    @staticmethod
     def display(nfa):
         for nfa_states in nfa.states:
             print('state number: ', nfa_states.data['name'])
@@ -148,3 +154,59 @@ class Nfa:
                 else:
                     inputs.append(trans)
         return inputs
+
+    @staticmethod
+    def compile(regex):
+        operands_stack = []
+        operator_stack = []
+        buffer = ""
+        for (index, character) in enumerate(regex):
+            if character.isalnum():
+                buffer += character
+                if index == len(regex)-1:
+                    operands_stack.append(Nfa(character))
+            elif character in operators_list:
+                if buffer != "":
+                    operands_stack.append(Nfa(buffer))
+                buffer = ""
+                if character == '|':
+                    operator_stack.append(character)
+                elif character == '.':
+                    operator_stack.append(character)
+
+                elif character == '(':
+                    operator_stack.append(character)
+                elif character == '*':
+                    operand = operands_stack.pop()
+                    operands_stack.append(Nfa.klein(operand))
+                elif character == '+':
+                    operand = operands_stack.pop()
+                    operands_stack.append(Nfa.plus(operand))
+
+                elif character == ')':
+                    while True:
+                        temp = operator_stack.pop()
+                        if temp == '(':
+                            break
+                        else:
+                            operand_one = operands_stack.pop()
+                            operand_two = operands_stack.pop()
+                            if temp == '|':
+                                operands_stack.append(Nfa.union(operand_one, operand_two))
+                            elif temp == '.':
+                                operands_stack.append(Nfa.concat(operand_two, operand_one))
+        while operator_stack:
+            temp = operator_stack.pop()
+            operand_one = operands_stack.pop()
+            operand_two = operands_stack.pop()
+            if temp == '|':
+                operands_stack.append(Nfa.union(operand_one, operand_two))
+            elif temp == '.':
+                operands_stack.append(Nfa.concat(operand_two, operand_one))
+            elif character == '*':
+                operand = operands_stack.pop()
+                operands_stack.append(Nfa.klein(operand))
+            elif character == '+':
+                operand = operands_stack.pop()
+                operands_stack.append(Nfa.plus(operand))
+        return operands_stack.pop()
