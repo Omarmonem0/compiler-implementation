@@ -93,7 +93,6 @@ class Nfa:
             first_nfa_final_state.data['trans'] = second_nfa.start_state.data['trans']
         for second_nfa_final_state in second_nfa.final_states:
             combined_nfa.final_states.append(second_nfa_final_state)
-            combined_nfa.states.append(second_nfa_final_state)
         for first_nfa_state in copy.states:  # append states of first nfa to states list of the new nfa
             combined_nfa.states.append(first_nfa_state)
         for second_nfa_state in second_nfa.states:
