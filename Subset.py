@@ -2,32 +2,66 @@ import Thompson
 import copy
 
 
+def increment_char(c):
+    """
+    Increment an uppercase character, returning 'A' if 'Z' is given
+    """
+    return chr(ord(c) + 1) if c != 'Z' else 'A'
+
+
+def increment_str(s):
+    left_char = s.rstrip('Z')
+    if not left_char:  # s contains only 'Z'
+        new_s = 'A' * (len(s) + 1)
+    else:
+        num_replacements = len(s) - len(left_char)
+        new_s = left_char[:-1] + increment_char(left_char[-1])
+        new_s += 'A' * num_replacements
+    return new_s
+
+
+def get_name():
+    name = increment_str(DfaState.last_name)
+    DfaState.last_name = name
+    return name
+
+
 class DfaState:
-    def __init__(self, nfa_states):
-        self.nfa_state = copy.deepcopy(nfa_states)
+    last_name = 'A'
+
+    def __init__(self, nfa_states, name):
+        self.states = copy.deepcopy(nfa_states)
+        self.marked = None
+        self.name = name
+        self.trans = {}
+        self.is_accept = None
+
+    def __str__(self):
+        return 'DFA#{}, trans: {}'.format(self.name, self.trans)
+
+    def __repr__(self):
+        return 'DFA#{}, trans: {}'.format(self.name, self.trans)
 
 
 class Subset:
     @staticmethod
     def epsilon_closures(states):
-        e_closure = []
-        e_closure = copy.deepcopy(states)
+        e_closure = [state for state in states]
         stack = []
         for state in states:
             stack.append(state)
-        while not not stack:
+        while len(stack) > 0:
             state = stack.pop()
-            for key in state.data['trans']:
-                if key is 'E':
-                    if isinstance(state.data['trans'][key], list):
-                        for epsilons in state.data['trans'][key]:
-                            if epsilons not in e_closure:
-                                e_closure.append(epsilons)
-                                stack.append(epsilons)
-                    else:
-                        if state.data['trans']['E'] not in e_closure:
-                            e_closure.append(state.data['trans']['E'])
-                            stack.append(state.data['trans']['E'])
+            if state.data['trans'].get('E'):
+                if isinstance(state.data['trans']['E'], list):
+                    for epsilons in state.data['trans']['E']:
+                        if epsilons not in e_closure:
+                            e_closure.append(epsilons)
+                            stack.append(epsilons)
+                else:
+                    if state.data['trans']['E'] not in e_closure:
+                        e_closure.append(state.data['trans']['E'])
+                        stack.append(state.data['trans']['E'])
 
         return e_closure
 
@@ -49,26 +83,105 @@ class Subset:
         return returned_states
 
     @staticmethod
+    def check_equal_nfas(first_list, second_list):
+        for state1 in first_list:
+            found = False
+            for state2 in second_list:
+                if state1.data['name'] == state2.data['name']:
+                    found = True
+            if not found:
+                return False
+        return True
+
+    @staticmethod
     def nfa_to_dfa(nfa):
         Dstates = []
         temporary_states = []
         Dtran = []
-        unmarked_states = []
         input_symbols = nfa.input_symbols()
-        new_state = DfaState(Subset.epsilon_closures([nfa.start_state]))
-        Dstates.append(new_state)
-        for state in Subset.epsilon_closures([nfa.start_state]):
-            unmarked_states.append(state)
+        new_start_state = DfaState(Subset.epsilon_closures([nfa.start_state]), get_name())
+        new_start_state.marked = False
+        Dstates.append(new_start_state)
+        unmarked_states = [state for state in Dstates if not state.marked]
+        while len(unmarked_states) > 0:
+            current_dfa_state = unmarked_states[0]
+            current_dfa_state.marked = True
+            for symbol in input_symbols:
+                temp_nfa_states = Subset.epsilon_closures(Subset.move(current_dfa_state.states, symbol))
+                if len(temp_nfa_states) > 0:
+                    already_existed = False
+                    for dfa in Dstates:
+                        if Subset.check_equal_nfas(dfa.states, temp_nfa_states):
+                            already_existed = True
+                            current_dfa_state.trans[symbol] = dfa
+                            break
+                    if not already_existed:
+                        new_state = DfaState(temp_nfa_states, get_name())
+                        current_dfa_state.trans[symbol] = new_state
+                        new_state.marked = False
+                        Dstates.append(new_state)
+            unmarked_states = [state for state in Dstates if not state.marked]
+        Subset.mark_accepted_states(Dstates, nfa)
+        Subset.make_dead_state(Dstates, input_symbols)
+        return Dstates
+
+    @staticmethod
+    def mark_accepted_states(Dstates, nfa):
+        for Dstate in Dstates:
+            for nfa_state in Dstate.states:
+                for accept_state in nfa.final_states:
+                    if nfa_state.data['name'] == accept_state.data['name']:
+                        Dstate.is_accept = True
+
+    @staticmethod
+    def make_dead_state(Dstates, input_symbols):
+        dead_state = DfaState([Thompson.Nfa(None)], 'DEAD')
+        dead_state.is_accept = False
         for symbol in input_symbols:
-            for unmarked in unmarked_states:
-                unmarked_states.remove(unmarked)
-                temporary_states.append(Subset.epsilon_closures(Subset.move([unmarked], symbol)))
-            for state in temporary_states:
-                unmarked_states.append(state)
-        Dstates.append(DfaState(temporary_states))
+            dead_state.trans[symbol] = dead_state
+        went_to_dead_state = False
+        for Dstate in Dstates:
+            for symbol in input_symbols:
+                if not Dstate.trans.get(symbol):
+                    Dstate.trans[symbol] = dead_state
+                    if not went_to_dead_state:
+                        went_to_dead_state = True
+        if went_to_dead_state:
+            Dstates.append(dead_state)
 
 
-nfa1 = Thompson.Nfa('a')
-nfa2 = Thompson.Nfa('b')
-nfa3 = Thompson.Nfa.union(nfa1, nfa2)
-Subset.nfa_to_dfa(nfa3)
+W = Thompson.State('W')
+X = Thompson.State('X')
+Y = Thompson.State('Y')
+Z = Thompson.State('Z')
+E = Thompson.State('e')
+F = Thompson.State('f')
+
+W.data['trans']['a'] = X
+W.data['trans']['b'] = Y
+X.data['trans']['E'] = Z
+Y.data['trans']['c'] = Z
+Z.data['trans']['E'] = W
+
+nfa = Thompson.Nfa('q')
+nfa.name = 'hoppa'
+nfa.states = [W, X, Y, Z]
+nfa.start_state = W
+nfa.final_states = [Z]
+
+
+nfa2 = Thompson.Nfa('a')
+nfa3 = Thompson.Nfa('b')
+nfa4 = Thompson.Nfa('c')
+
+
+union = Thompson.Nfa.union(nfa2, nfa3)
+concat = Thompson.Nfa.concat(union, nfa4)
+# po = Thompson.Nfa.klein(union)
+# print(union)
+
+print(Subset.nfa_to_dfa(concat))
+# print(Subset.epsilon_closures(Subset.move([W], 'a')))
+
+# for s in result:
+#     print(s)
