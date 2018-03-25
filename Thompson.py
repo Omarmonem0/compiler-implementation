@@ -76,9 +76,12 @@ class Nfa:
             first_nfa_final_state.data['trans'] = second_nfa.start_state.data['trans']
         for second_nfa_final_state in second_nfa.final_states:
             combined_nfa.final_states.append(second_nfa_final_state)
-            combined_nfa.states.append(second_nfa_final_state)
         for first_nfa_state in copy.states:  # append states of first nfa to states list of the new nfa
             combined_nfa.states.append(first_nfa_state)
+        for second_nfa_state in second_nfa.states:
+            if second_nfa_state != second_nfa.start_state:
+                combined_nfa.states.append(second_nfa_state)
+
         return combined_nfa
 
     @staticmethod
@@ -104,8 +107,23 @@ class Nfa:
 
     @staticmethod
     def plus(nfa):
-        result = Nfa.concat(nfa, Nfa.klein(nfa))
-        return result
+        Nfa.count += 1
+        new_start_state = State(Nfa.count)
+        Nfa.count += 1
+        new_final_state = State(Nfa.count)
+        for final_states in nfa.final_states:
+            final_states.data['trans'] = {
+                '$': [new_final_state, nfa.start_state]
+            }
+        new_start_state.data['trans'] = {
+            '$': nfa.start_state
+        }
+        nfa.start_state = new_start_state
+        del nfa.final_states[:]
+        nfa.final_states.append(new_final_state)
+        nfa.states.append(new_start_state)
+        nfa.states.append(new_final_state)
+        return nfa
 
     @staticmethod
     def display(nfa):
@@ -149,26 +167,97 @@ class Nfa:
         return inputs
 
     @staticmethod
+    def eval_concatenated(buffer):
+        new_buffer = ""
+        operands_stack = []
+        concat_stack = []
+        for character in buffer:
+            if character == " ":
+                new_buffer += '.'
+            else:
+                new_buffer += character
+        for character in new_buffer:
+            if character.isalnum():
+                operands_stack.append(Nfa(character))
+            else:
+                concat_stack.append(character)
+        while concat_stack:
+            operand_one = operands_stack.pop()
+            concat_stack.pop()
+            operand_two = operands_stack.pop()
+            operands_stack.append(Nfa.concat(operand_two, operand_one))
+        return operands_stack.pop()
+
+    @staticmethod
     def compile(regex):
+        nfa_name = ""
         operands_stack = []
         operator_stack = []
         buffer = ""
-        for (index, character) in enumerate(regex):
-            if character.isalnum():
-                buffer += character
-                if index == len(regex)-1:
+        backslash_flag = 0
+        final_nfas = []
+        for field in regex['regular_expressions']:
+            nfa_name = field
+            for (index, character) in enumerate(regex['regular_expressions'][field]):
+                if character.isalnum():
+                    if len(buffer) == 0:
+                        buffer += character
+                    elif len(buffer) >= 1:
+                        buffer += " " + character
+                    if index == len(regex['regular_expressions'][field])-1:
+                        if len(buffer) == 1:
+                            operands_stack.append(Nfa(buffer))
+                        else:
+                            operands_stack.append(Nfa.eval_concatenated(buffer))
+                elif character == '\\':
+                    backslash_flag = 1
+                elif character == '$':
                     operands_stack.append(Nfa(character))
-            elif character in operators_list:
-                if buffer != "":
-                    operands_stack.append(Nfa(buffer))
-                buffer = ""
-                if character == '|':
-                    operator_stack.append(character)
-                elif character == '.':
-                    operator_stack.append(character)
+                elif character in operators_list:
+                    if buffer != "":
+                        if len(buffer) == 1:
+                            operands_stack.append(Nfa(buffer))
+                        else:
+                            operands_stack.append(Nfa.eval_reserved(buffer))
+                    buffer = ""
+                    if character == '|':
+                        operator_stack.append(character)
+                    elif character == '.':
+                        if backslash_flag == 1:
+                            backslash_flag = 0
+                            operands_stack.append(Nfa(character))
+                        else:
+                            operator_stack.append(character)
 
-                elif character == '(':
-                    operator_stack.append(character)
+                    elif character == '(':
+                        operator_stack.append(character)
+                    elif character == '*':
+                        operand = operands_stack.pop()
+                        operands_stack.append(Nfa.klein(operand))
+                    elif character == '+':
+                        operand = operands_stack.pop()
+                        operands_stack.append(Nfa.plus(operand))
+
+                    elif character == ')':
+                        while True:
+                            temp = operator_stack.pop()
+                            if temp == '(':
+                                break
+                            else:
+                                operand_one = operands_stack.pop()
+                                operand_two = operands_stack.pop()
+                                if temp == '|':
+                                    operands_stack.append(Nfa.union(operand_one, operand_two))
+                                elif temp == '.':
+                                    operands_stack.append(Nfa.concat(operand_two, operand_one))
+            while operator_stack:
+                temp = operator_stack.pop()
+                operand_one = operands_stack.pop()
+                operand_two = operands_stack.pop()
+                if temp == '|':
+                    operands_stack.append(Nfa.union(operand_one, operand_two))
+                elif temp == '.':
+                    operands_stack.append(Nfa.concat(operand_two, operand_one))
                 elif character == '*':
                     operand = operands_stack.pop()
                     operands_stack.append(Nfa.klein(operand))
@@ -176,30 +265,33 @@ class Nfa:
                     operand = operands_stack.pop()
                     operands_stack.append(Nfa.plus(operand))
 
-                elif character == ')':
-                    while True:
-                        temp = operator_stack.pop()
-                        if temp == '(':
-                            break
-                        else:
-                            operand_one = operands_stack.pop()
-                            operand_two = operands_stack.pop()
-                            if temp == '|':
-                                operands_stack.append(Nfa.union(operand_one, operand_two))
-                            elif temp == '.':
-                                operands_stack.append(Nfa.concat(operand_two, operand_one))
-        while operator_stack:
-            temp = operator_stack.pop()
-            operand_one = operands_stack.pop()
-            operand_two = operands_stack.pop()
-            if temp == '|':
-                operands_stack.append(Nfa.union(operand_one, operand_two))
-            elif temp == '.':
-                operands_stack.append(Nfa.concat(operand_two, operand_one))
-            elif character == '*':
-                operand = operands_stack.pop()
-                operands_stack.append(Nfa.klein(operand))
-            elif character == '+':
-                operand = operands_stack.pop()
-                operands_stack.append(Nfa.plus(operand))
-        return operands_stack.pop()
+            result = operands_stack.pop()
+            result.name = nfa_name
+            final_nfas.append(result)
+
+        for keyword in regex['keyword']:
+            nfa_name = keyword
+            keyword = " ".join(keyword)
+
+            temp = Nfa.eval_concatenated(keyword)
+            temp.name = nfa_name
+            final_nfas.append(temp)
+
+        for punctuation in regex['punctuations']:
+            temp = Nfa(punctuation)
+            temp.name = punctuation
+            final_nfas.append(temp)
+
+        return final_nfas
+
+
+dictionary = {
+    'regular_expressions': {
+        'id': 'a',
+        'token': 'b'
+    },
+    'keyword': ['while', 'if', 'else'],
+    'punctuations': [';', ':', '.']
+}
+
+Nfa.compile(dictionary)
