@@ -174,6 +174,10 @@ def parse_regular_expressions(lines, regular_definitions):
                 next_char = RHS[index + 1]
                 if next_char == 'L':
                     rhs_buffer += '$'
+                elif next_char in symbols:
+                    rhs_buffer += '.'
+                    rhs_buffer += '\\{}'.format(next_char)
+                    rhs_buffer += '.'
                 else:
                     rhs_buffer += next_char
                 skip_iteration = True
@@ -194,6 +198,7 @@ def parse_regular_expressions(lines, regular_definitions):
                 # it is a symbol always push into buffer and clear the word buffer
                 rhs_buffer += char
                 word_buffer = ''
+            # if last word in RHS a predefined word or a static word
             if index == (len(RHS) - 1):
                 if word_buffer:
                     if regular_definitions.get(word_buffer):
