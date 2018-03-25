@@ -35,30 +35,31 @@ class DfaState:
         self.trans = {}
 
     def __str__(self):
-        return 'name: {}, states: {}, trans: {}'.format(self.name, self.states, self.trans)
+        return 'DFA#{}, states: {}, trans: {}'.format(self.name, self.states, self.trans)
+
+    def __repr__(self):
+        return 'DFA#{}, states: {}, trans: {}'.format(self.name, self.states, self.trans)
 
 
 class Subset:
     @staticmethod
     def epsilon_closures(states):
-        e_closure = []
         e_closure = copy.deepcopy(states)
         stack = []
         for state in states:
             stack.append(state)
-        while not not stack:
+        while len(stack) > 0:
             state = stack.pop()
-            for key in state.data['trans']:
-                if key is 'E':
-                    if isinstance(state.data['trans'][key], list):
-                        for epsilons in state.data['trans'][key]:
-                            if epsilons not in e_closure:
-                                e_closure.append(epsilons)
-                                stack.append(epsilons)
-                    else:
-                        if state.data['trans']['E'] not in e_closure:
-                            e_closure.append(state.data['trans']['E'])
-                            stack.append(state.data['trans']['E'])
+            if state.data['trans'].get('E'):
+                if isinstance(state.data['trans']['E'], list):
+                    for epsilons in state.data['trans']['E']:
+                        if epsilons not in e_closure:
+                            e_closure.append(epsilons)
+                            stack.append(epsilons)
+                else:
+                    if state.data['trans']['E'] not in e_closure:
+                        e_closure.append(state.data['trans']['E'])
+                        stack.append(state.data['trans']['E'])
 
         return e_closure
 
@@ -82,7 +83,11 @@ class Subset:
     @staticmethod
     def check_equal_nfas(first_list, second_list):
         for state1 in first_list:
-            if state1 not in second_list:
+            found = False
+            for state2 in second_list:
+                if state1.data['name'] == state2.data['name']:
+                    found = True
+            if not found:
                 return False
         return True
 
@@ -141,8 +146,9 @@ F = Thompson.State('f')
 
 W.data['trans']['a'] = X
 W.data['trans']['b'] = Y
-X.data['trans']['d'] = Z
+X.data['trans']['E'] = Z
 Y.data['trans']['c'] = Z
+Z.data['trans']['E'] = W
 
 nfa = Thompson.Nfa(None)
 nfa.name = 'hoppa'
@@ -150,7 +156,16 @@ nfa.states = [W, X, Y, Z]
 nfa.start_state = W
 nfa.final_states = [Z]
 
-result = Subset.nfa_to_dfa(nfa)
 
-for s in result:
-    print(s)
+nfa2 = Thompson.Nfa('a')
+nfa3 = Thompson.Nfa('b')
+
+union = Thompson.Nfa.union(nfa2, nfa3)
+# po = Thompson.Nfa.
+# print(union)
+
+print(Subset.nfa_to_dfa(union))
+# print(Subset.epsilon_closures(Subset.move([W], 'a')))
+
+# for s in result:
+#     print(s)
