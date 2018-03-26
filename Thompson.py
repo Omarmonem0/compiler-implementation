@@ -1,4 +1,3 @@
-from copy import deepcopy
 
 operators_list = ['|', '.', '*', ')', '(', '+']
 
@@ -32,12 +31,12 @@ class Nfa:
             self.make_character_nfa(character)
 
     def __str__(self):
-        # return 'NFA states({}): {}'.format(len(self.states), self.states)
-        return self.name
+        return 'NFA states({}): {}'.format(len(self.states), self.states)
+        # return self.name
 
     def __repr__(self):
-        # return 'NFA states({}): {}'.format(len(self.states), self.states)
-        return self.name
+        return 'NFA states({}): {}'.format(len(self.states), self.states)
+        # return self.name
 
     def make_character_nfa(self, character):
         Nfa.count += 1
@@ -86,14 +85,13 @@ class Nfa:
 
     @staticmethod
     def concat(first_nfa, second_nfa):
-        copy = deepcopy(first_nfa)
         combined_nfa = Nfa(None)
-        combined_nfa.start_state = copy.start_state
-        for first_nfa_final_state in copy.final_states:  # append states of first nfa to states list of the new nfa
+        combined_nfa.start_state = first_nfa.start_state
+        for first_nfa_final_state in first_nfa.final_states:  # append states of first nfa to states list of the new nfa
             first_nfa_final_state.data['trans'] = second_nfa.start_state.data['trans']
         for second_nfa_final_state in second_nfa.final_states:
             combined_nfa.final_states.append(second_nfa_final_state)
-        for first_nfa_state in copy.states:  # append states of first nfa to states list of the new nfa
+        for first_nfa_state in first_nfa.states:  # append states of first nfa to states list of the new nfa
             combined_nfa.states.append(first_nfa_state)
         for second_nfa_state in second_nfa.states:
             if second_nfa_state != second_nfa.start_state:
@@ -303,11 +301,11 @@ class Nfa:
 
 dictionary = {
     'regular_expressions': {
-        'id': 'a',
+        'id': '(a|b|c)*',
         'token': 'b'
     },
     'keyword': ['while', 'if', 'else'],
     'punctuations': [';', ':', '.']
 }
 
-Nfa.compile(dictionary)
+# print(Nfa.compile(dictionary))
