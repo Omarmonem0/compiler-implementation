@@ -37,10 +37,10 @@ class DfaState:
         self.is_accept = None
 
     def __str__(self):
-        return 'DFA#{}, trans: {}'.format(self.name, self.trans)
+        return 'DState#{}, trans: {}'.format(self.name, self.trans)
 
     def __repr__(self):
-        return 'DFA#{}, trans: {}'.format(self.name, self.trans)
+        return 'DState#{}, trans: {}'.format(self.name, self.trans)
 
 
 class Dfa:
@@ -48,6 +48,12 @@ class Dfa:
     def __init__(self, Dstates, name):
         self.Dstates = Dstates
         self.name = name
+
+    def __str__(self):
+        return 'DFA#{}'.format(self.name)
+
+    def __repr__(self):
+        return 'DFA#{} '.format(self.name)
 
 
 class Subset:
@@ -59,16 +65,16 @@ class Subset:
             stack.append(state)
         while len(stack) > 0:
             state = stack.pop()
-            if state.data['trans'].get('E'):
-                if isinstance(state.data['trans']['E'], list):
-                    for epsilons in state.data['trans']['E']:
+            if state.data['trans'].get('$'):
+                if isinstance(state.data['trans']['$'], list):
+                    for epsilons in state.data['trans']['$']:
                         if epsilons not in e_closure:
                             e_closure.append(epsilons)
                             stack.append(epsilons)
                 else:
-                    if state.data['trans']['E'] not in e_closure:
-                        e_closure.append(state.data['trans']['E'])
-                        stack.append(state.data['trans']['E'])
+                    if state.data['trans']['$'] not in e_closure:
+                        e_closure.append(state.data['trans']['$'])
+                        stack.append(state.data['trans']['$'])
 
         return e_closure
 
@@ -185,7 +191,7 @@ concat = Thompson.Nfa.concat(union, nfa4)
 # po = Thompson.Nfa.klein(union)
 # print(union)
 
-print(Subset.nfa_to_dfa(concat).Dstates)
+# print(Subset.nfa_to_dfa(concat).Dstates)
 # print(Subset.epsilon_closures(Subset.move([W], 'a')))
 
 # for s in result:

@@ -63,15 +63,15 @@ class Nfa:
         new_end_state = State(Nfa.count)
         new_start_state.data['trans'] = {  # epsilon transition from
             #  the new start state to the old start states of nfa1 and nfa2
-            'E': [first_nfa.start_state,  second_nfa.start_state]
+            '$': [first_nfa.start_state,  second_nfa.start_state]
         }
         for final_state in first_nfa.final_states:
             final_state.data['trans'] = {  # epsilon transition from final states to new the final state
-                'E': new_end_state
+                '$': new_end_state
             }
         for final_state in second_nfa.final_states:
             final_state.data['trans'] = {
-                'E': new_end_state
+                '$': new_end_state
             }
         combined_nfa.start_state = new_start_state  # assigning new start state
         combined_nfa.final_states.append(new_end_state)  # assigning new end state
@@ -107,10 +107,10 @@ class Nfa:
         Nfa.count += 1
         new_final_state = State(Nfa.count)
         new_start_state.data['trans'] = {
-            'E': [new_final_state, nfa.start_state]
+            '$': [new_final_state, nfa.start_state]
         }
         for final_states in nfa.final_states:
-            final_states.data['trans'].update({'E': [nfa.start_state, new_final_state]})
+            final_states.data['trans'].update({'$': [nfa.start_state, new_final_state]})
         for nfa_state in nfa.states:  # append states of first nfa to states list of the new nfa
             new_nfa.states.append(nfa_state)
         new_nfa.start_state = new_start_state
@@ -174,7 +174,7 @@ class Nfa:
         inputs = []
         for states in self.states:
             for trans in states.data['trans']:
-                if trans in inputs or trans is 'E':
+                if trans in inputs or trans is '$':
                     continue
                 else:
                     inputs.append(trans)
@@ -232,7 +232,7 @@ class Nfa:
                         if len(buffer) == 1:
                             operands_stack.append(Nfa(buffer))
                         else:
-                            operands_stack.append(Nfa.eval_reserved(buffer))
+                            operands_stack.append(Nfa.eval_concatenated(buffer))
                     buffer = ""
                     if character == '|':
                         operator_stack.append(character)
@@ -283,7 +283,7 @@ class Nfa:
             result.name = nfa_name
             final_nfas.append(result)
 
-        for keyword in regex['keyword']:
+        for keyword in regex['keywords']:
             nfa_name = keyword
             keyword = " ".join(keyword)
 

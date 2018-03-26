@@ -25,13 +25,24 @@ def start_parsing(file_name):
             line_punctuations = get_punctuations_from_line(line)
             punctuations.extend(line_punctuations)
     regular_definitions = parse_regular_definitions(regular_definitions_lines)
-    regular_expressions = parse_regular_expressions(regular_expressions_lines, regular_definitions)
+    result = parse_regular_expressions(regular_expressions_lines, regular_definitions)
+    regular_expressions = result['expressions']
+    priorities = result['priorities']
+    priorities = set_keywords_priorities(priorities, keywords, regular_expressions)
     return {
         'regular_expressions': regular_expressions,
         'regular_definitions': regular_definitions,
         'keywords': keywords,
-        'punctuations': punctuations
+        'punctuations': punctuations,
+        'priorities': priorities
     }
+
+
+def set_keywords_priorities(priorities, keywords, regular_expressions):
+    max_no = len(regular_expressions)
+    for keyword in keywords:
+        priorities[keyword] = max_no + 1
+    return priorities
 
 
 def check_char_not_escaped(line, char, must_be_before):
@@ -156,6 +167,8 @@ def parse_regular_expressions(lines, regular_definitions):
     """
     symbols = ['+', '*', '|', '(', ')', '.']
     result = {}
+    start_priority = len(lines)
+    priorities = {}
     for line in lines:
         rhs_buffer = ''
         word_buffer = ''
@@ -171,6 +184,7 @@ def parse_regular_expressions(lines, regular_definitions):
             if char == ' ':
                 continue
             if char == '\\':
+
                 next_char = RHS[index + 1]
                 if next_char == 'L':
                     rhs_buffer += '$'
@@ -206,7 +220,12 @@ def parse_regular_expressions(lines, regular_definitions):
                     else:
                         rhs_buffer += word_buffer
         result[LHS] = rhs_buffer
-    return result
+        priorities[LHS] = start_priority
+        start_priority -= 1
+    return {
+        'expressions': result,
+        'priorities': priorities
+    }
 
-print(start_parsing('inputs/lexical-rules.txt'))
+# print(start_parsing('inputs/lexical-rules.txt'))
 # print(upper_chars)
