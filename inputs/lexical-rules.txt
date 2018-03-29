@@ -1,10 +1,12 @@
-{key keys word words}
-{ wordss }
-[]/?' " [ \]
-letter = a-c
-digit = 0-1
+letter = a-z | A-Z
+digit = 0-9
 id: letter.(letter|digit)*
 digits = digit+
-{boolean bbc float}
-num:  digit+ | digit+ \. digits.( \L | E digits)
+{boolean int float}
+num:  digit+ | digit+ \. digits.( \L | E.digits)
+relop: \=\= | !\= | > | >\= | < | <\=
+assign: =
 { if else while}
+[; , \( \) { }]
+addop: \+ | -
+mulop: \* | /

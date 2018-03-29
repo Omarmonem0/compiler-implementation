@@ -1,5 +1,4 @@
 import Thompson
-import copy
 
 
 def increment_char(c):
@@ -30,7 +29,7 @@ class DfaState:
     last_name = 'A'
 
     def __init__(self, nfa_states, name):
-        self.states = copy.deepcopy(nfa_states)
+        self.states = nfa_states
         self.marked = None
         self.name = name
         self.trans = {}

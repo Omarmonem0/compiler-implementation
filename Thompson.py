@@ -144,11 +144,11 @@ class Nfa:
         for nfa_states in nfa.states:
             print('state number: ', nfa_states.data['name'])
             for key in nfa_states.data['trans']:
-                    if isinstance(nfa_states.data['trans'][key], list):
-                        for trans in nfa_states.data['trans'][key]:
-                            print('symbol: ', key, 'new state: ', trans.data['name'])
-                    else:
-                        print('symbol: ', key, 'new state: ', nfa_states.data['trans'][key].data['name'])
+                if isinstance(nfa_states.data['trans'][key], list):
+                    for trans in nfa_states.data['trans'][key]:
+                        print('symbol: ', key, 'new state: ', trans.data['name'])
+                else:
+                    print('symbol: ', key, 'new state: ', nfa_states.data['trans'][key].data['name'])
 
     @staticmethod
     def alpha(character):
@@ -191,10 +191,10 @@ class Nfa:
             else:
                 new_buffer += character
         for character in new_buffer:
-            if character.isalnum():
-                operands_stack.append(Nfa(character))
-            else:
+            if character == '.':
                 concat_stack.append(character)
+            else:
+                operands_stack.append(Nfa(character))
         while concat_stack:
             operand_one = operands_stack.pop()
             concat_stack.pop()
@@ -242,15 +242,22 @@ class Nfa:
                             operands_stack.append(Nfa(character))
                         else:
                             operator_stack.append(character)
-
                     elif character == '(':
                         operator_stack.append(character)
                     elif character == '*':
-                        operand = operands_stack.pop()
-                        operands_stack.append(Nfa.klein(operand))
+                        if backslash_flag == 1:
+                            backslash_flag = 0
+                            operands_stack.append(Nfa(character))
+                        else:
+                            operand = operands_stack.pop()
+                            operands_stack.append(Nfa.klein(operand))
                     elif character == '+':
-                        operand = operands_stack.pop()
-                        operands_stack.append(Nfa.plus(operand))
+                        if backslash_flag == 1:
+                            backslash_flag = 0
+                            operands_stack.append(Nfa(character))
+                        else:
+                            operand = operands_stack.pop()
+                            operands_stack.append(Nfa.plus(operand))
 
                     elif character == ')':
                         while True:
@@ -264,6 +271,18 @@ class Nfa:
                                     operands_stack.append(Nfa.union(operand_one, operand_two))
                                 elif temp == '.':
                                     operands_stack.append(Nfa.concat(operand_two, operand_one))
+                else:
+                    if len(buffer) == 0:
+                        buffer += character
+                    elif len(buffer) >= 1:
+                        buffer += " " + character
+                    if index == len(regex['regular_expressions'][field]) - 1:
+                        if len(buffer) == 1:
+                            operands_stack.append(Nfa(buffer))
+                            buffer = ""
+                        else:
+                            operands_stack.append(Nfa.eval_concatenated(buffer))
+                            buffer = ""
             while operator_stack:
                 temp = operator_stack.pop()
                 operand_one = operands_stack.pop()
@@ -286,7 +305,6 @@ class Nfa:
         for keyword in regex['keywords']:
             nfa_name = keyword
             keyword = " ".join(keyword)
-
             temp = Nfa.eval_concatenated(keyword)
             temp.name = nfa_name
             final_nfas.append(temp)

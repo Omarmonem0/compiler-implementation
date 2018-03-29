@@ -29,6 +29,7 @@ def start_parsing(file_name):
     regular_expressions = result['expressions']
     priorities = result['priorities']
     priorities = set_keywords_priorities(priorities, keywords, regular_expressions)
+    priorities = set_keywords_priorities(priorities, punctuations, regular_expressions)
     return {
         'regular_expressions': regular_expressions,
         'regular_definitions': regular_definitions,
@@ -189,9 +190,11 @@ def parse_regular_expressions(lines, regular_definitions):
                 if next_char == 'L':
                     rhs_buffer += '$'
                 elif next_char in symbols:
-                    rhs_buffer += '.'
+                    if index != 0:
+                        rhs_buffer += '.'
                     rhs_buffer += '\\{}'.format(next_char)
-                    rhs_buffer += '.'
+                    if RHS[index + 1] not in symbols:
+                        rhs_buffer += '.'
                 else:
                     rhs_buffer += next_char
                 skip_iteration = True

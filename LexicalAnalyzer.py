@@ -13,6 +13,8 @@ class LexicalAnalyzer:
         output = ''
         content = content.strip()
         for (index, char) in enumerate(content):
+            if char == '\n':
+                continue
             token_buffer += char
             accepted_tokens = self.get_accepted_tokens(token_buffer)
 
