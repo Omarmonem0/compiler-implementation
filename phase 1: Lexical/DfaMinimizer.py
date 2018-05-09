@@ -58,13 +58,15 @@ def minimize_dfa(dfa):
             for index in dfa.Dstates:
                 if index in j:
                     index['name'] = new_names[findItem(large_minimized,j)[0]]
-    return dfa
+    return large_minimized
+
 
 def inlist(input_list,state):
     for i in input_list:
         if state in i:
             return True
     return False
+
 
 def findItem(theList, item):
    return [(ind) for ind in range(len(theList)) if item in theList[ind]]

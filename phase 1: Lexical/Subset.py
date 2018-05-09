@@ -36,10 +36,10 @@ class DfaState:
         self.is_accept = None
 
     def __str__(self):
-        return 'DState#{}, trans: {}'.format(self.name, self.trans)
+        return 'DState#{}'.format(self.name)
 
     def __repr__(self):
-        return 'DState#{}, trans: {}'.format(self.name, self.trans)
+        return 'DState#{}'.format(self.name)
 
 
 class Dfa:
