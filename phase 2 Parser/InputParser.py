@@ -9,6 +9,7 @@ def start_parsing(file_name):
     terminal_buffer = ''
     non_terminal_buffer = ''
     lhs_buffer = ''
+    first_production = ''
     is_lhs = False
     is_rhs = False
     is_first_rhs_node = True
@@ -17,7 +18,7 @@ def start_parsing(file_name):
     terminals = []
     non_terminals = []
 
-    for char in file_content:
+    for index, char in enumerate(file_content):
         if char == '#':
             is_lhs = True
             is_rhs = False
@@ -30,6 +31,8 @@ def start_parsing(file_name):
             is_rhs = True
             is_first_rhs_node = True
             productions[lhs_buffer] = []
+            if len(productions) == 1:
+                first_production = lhs_buffer
             continue
         if is_lhs:
             if char == ' ':
@@ -80,10 +83,10 @@ def start_parsing(file_name):
                 non_terminal_buffer += char
             elif filling_terminal:
                 terminal_buffer += char
-    return productions
+    return productions, first_production
 
 
-start_parsing('CFG.txt')
+print(start_parsing('CFG.txt'))
 
 """
 Return Example:
