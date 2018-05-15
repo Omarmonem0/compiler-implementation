@@ -80,17 +80,17 @@ def check_for_epsilons(node, first):
     return False
 
 
-def first_follow(productions):
-    first = get_first(productions)
-    follow = get_follow(productions, first)
+def first_follow(productions, non_terminals, first_production):
+    first = get_first(productions, non_terminals)
+    follow = get_follow(productions, first, non_terminals, first_production)
     return {
         'FIRST': first,
         'FOLLOW': follow
     }
 
 
-rules = start_parsing('CFG.txt')
-first = get_first(rules['productions'], rules['non_terminals'])
+# rules = start_parsing('CFG.txt')
+# first = get_first(rules['productions'], rules['non_terminals'])
 # print("First")
 # for key, value in first.items():
 #     print(key, '->')
@@ -98,9 +98,9 @@ first = get_first(rules['productions'], rules['non_terminals'])
 #         print(node.value)
 
 # print("------------------------------------------------------------------------")
-follow = get_follow(rules['productions'], first, rules['non_terminals'], rules['first_production'])
-print("Follow")
-for key, value in follow.items():
-        print(key, '->')
-        for node in value:
-            print(node.value)
+# follow = get_follow(rules['productions'], first, rules['non_terminals'], rules['first_production'])
+# print("Follow")
+# for key, value in follow.items():
+#         print(key, '->')
+#         for node in value:
+#             print(node.value)
