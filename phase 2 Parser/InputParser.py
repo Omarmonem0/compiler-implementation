@@ -90,12 +90,28 @@ def start_parsing(file_name):
                 non_terminal_buffer += char
             elif filling_terminal:
                 terminal_buffer += char
+
+    check_left_recursion(productions)
     return {
         'productions': productions,
         'terminals': terminals,
         'non_terminals': non_terminals,
         'first_production': first_production
     }
+
+
+def check_left_recursion(productions):
+    for N, L in productions.items():
+        left_recursion(N, L, productions, 7)
+
+
+def left_recursion(non_terminal, node_list, productions, level):
+    for node in node_list:
+        if node.type == 'N':
+            if node.value == non_terminal:
+                exit('Left recursion found in {}, Terminating...'.format(node.value))
+            elif level:
+                left_recursion(non_terminal, productions[node.value], productions, level - 1)
 
 
 def check_if_existed(node_list, node):
@@ -105,7 +121,7 @@ def check_if_existed(node_list, node):
     return False
 
 
-print(start_parsing('CFG.txt'))
+# print(start_parsing('CFG.txt'))
 
 """
 Return Example:

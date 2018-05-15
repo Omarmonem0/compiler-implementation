@@ -26,7 +26,7 @@ def start_parsing(file_name, table, first_production):
     data = data.split('\n')
     stack = [Terminal('epsilon', None), NonTerminal(first_production, None)]
     i = 0
-
+    print(table)
     while i < len(data):
         if data[i] == '' or data[i] == ' ':
             continue
@@ -49,8 +49,8 @@ def start_parsing(file_name, table, first_production):
                 print('Matched {}'.format(data[i]))
                 i += 1
             else:
-                stack.pop()
                 print('Error: missing {}, inserted'.format(top(stack).value))
+                stack.pop()
         elif top(stack).type == 'N':
             if isinstance(table[top(stack).value][data[i]], Node):
                 # pop that node and reverse its production
