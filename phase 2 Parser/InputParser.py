@@ -59,6 +59,8 @@ def start_parsing(file_name):
                 continue
             if char == '\'':
                 if terminal_buffer:
+                    if terminal_buffer == '\L':
+                        terminal_buffer = 'epsilon'
                     t = Terminal(terminal_buffer, None)
                     if is_first_rhs_node:
                         productions[lhs_buffer].append(t)
