@@ -10,14 +10,10 @@ def gettype(node):
         return 0
 
 
-def get_first(productions):
-    first = {
-        'E': [],
-        'A': [],
-        'T': [],
-        'B': [],
-        'F': []
-    }
+def get_first(productions, non_terminals):
+    first = {}
+    for non_terminal in non_terminals:
+        first[non_terminal.value] = []
     productions = collections.OrderedDict(productions)
     for key, rule in reversed(productions.items()):
         for node in rule:
@@ -33,15 +29,12 @@ def get_first(productions):
     return first
 
 
-def follow(productions, first):
-    starting_symbol = Node('$', None)
-    follow = {
-        'E': [starting_symbol],
-        'A': [],
-        'T': [],
-        'B': [],
-        'F': []
-    }
+def get_follow(productions,  first, non_terminals, starting_symbol):
+    starting_node = Node('$', None)
+    follow = {}
+    for non_terminal in non_terminals:
+        follow[non_terminal.value] = []
+    follow[starting_symbol].append(starting_node)
     for key_one, nodes_one in productions.items():
         for key_two, nodes_two in productions.items():
             for node in nodes_two:
@@ -86,18 +79,28 @@ def check_for_epsilons(node, first):
             return True
     return False
 
+
+def first_follow(productions):
+    first = get_first(productions)
+    follow = get_follow(productions, first)
+    return {
+        'FIRST': first,
+        'FOLLOW': follow
+    }
+
+
 rules = start_parsing('CFG.txt')
-first = get_first(rules)
-print("First")
-for key, value in first.items():
-    print(key, '->')
-    for node in value:
-        print(node.value)
-print("------------------------------------------------------------------------")
-follow = follow(rules, first)
+first = get_first(rules['productions'], rules['non_terminals'])
+# print("First")
+# for key, value in first.items():
+#     print(key, '->')
+#     for node in value:
+#         print(node.value)
+
+# print("------------------------------------------------------------------------")
+follow = get_follow(rules['productions'], first, rules['non_terminals'], rules['first_production'])
 print("Follow")
 for key, value in follow.items():
-    print(key, '->')
-    for node in value:
-        print(node.value)
-
+        print(key, '->')
+        for node in value:
+            print(node.value)

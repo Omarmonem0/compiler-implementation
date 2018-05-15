@@ -31,6 +31,9 @@ def start_parsing(file_name):
             is_rhs = True
             is_first_rhs_node = True
             productions[lhs_buffer] = []
+            n = NonTerminal(lhs_buffer, None)
+            if not check_if_existed(non_terminals, n):
+                   non_terminals.append(n)
             if len(productions) == 1:
                 first_production = lhs_buffer
             continue
@@ -44,6 +47,8 @@ def start_parsing(file_name):
             if char == ' ' or char == '|' or char == '\n':
                 if non_terminal_buffer:
                     n = NonTerminal(non_terminal_buffer, None)
+                    if not check_if_existed(non_terminals, n):
+                        non_terminals.append(n)
                     if is_first_rhs_node:
                         productions[lhs_buffer].append(n)
                     else:
@@ -65,6 +70,8 @@ def start_parsing(file_name):
                     if terminal_buffer == '\L':
                         terminal_buffer = 'epsilon'
                     t = Terminal(terminal_buffer, None)
+                    if not check_if_existed(terminals, t):
+                        terminals.append(t)
                     if is_first_rhs_node:
                         productions[lhs_buffer].append(t)
                     else:
@@ -83,7 +90,19 @@ def start_parsing(file_name):
                 non_terminal_buffer += char
             elif filling_terminal:
                 terminal_buffer += char
-    return productions, first_production
+    return {
+        'productions': productions,
+        'terminals': terminals,
+        'non_terminals': non_terminals,
+        'first_production': first_production
+    }
+
+
+def check_if_existed(node_list, node):
+    for n in node_list:
+        if node == n:
+            return True
+    return False
 
 
 print(start_parsing('CFG.txt'))
@@ -96,6 +115,7 @@ Return Example:
     'productions': {
         'STATEMENT_LIST': [Node n1, Node n2],
         'METHOD_BODY': [Node n3]
-    }
+    },
+    'first_production': String
 }
 """
