@@ -16,8 +16,6 @@ def make_array(node):
         node = node.next
     return temp
 
-# TODO: handle epsilon $
-
 
 def start_parsing(file_name, table, first_production):
     file = open(file_name, 'r')
@@ -26,8 +24,8 @@ def start_parsing(file_name, table, first_production):
     data = data.split('\n')
     stack = [Terminal('epsilon', None), NonTerminal(first_production, None)]
     i = 0
-    print(table)
-    while i < len(data):
+
+    while i <= len(data):
         if data[i] == '' or data[i] == ' ':
             continue
         if len(stack) == 0 and i == len(data) - 1:
@@ -37,9 +35,6 @@ def start_parsing(file_name, table, first_production):
             print('Reject')
             return
 
-        # if len(stack) == 0:
-        #     print(i)
-        #     return
         if top(stack).type == 'T':
             if top(stack).value == 'epsilon':
                 stack.pop()
@@ -59,11 +54,17 @@ def start_parsing(file_name, table, first_production):
                 while len(production_array):
                     stack.append(production_array.pop())
             elif table[top(stack).value][data[i]] == 'synch':
-                # TODO handle synch
-                pass
+                print('synch found poping {}'.format(top(stack).value))
+                stack.pop()
             else:
                 print('Error: (illegal {}), discarding {}'.format(top(stack).value, data[i]))
                 i += 1
+            if len(stack) == 0 and i == len(data) - 1:
+                print('Accept')
+                return
+            elif len(stack) == 0 and i < len(data) or len(stack) > 0 and i == len(data):
+                print('Reject')
+                return
 
 # AbS = NonTerminal('A', Terminal('b', NonTerminal('S', None)))
 # e = Terminal('e', None)

@@ -1,12 +1,3 @@
-from Node import Node
-from NonTerminal import NonTerminal
-from Terminal import Terminal
-from FirstAndFollow import get_first
-import InputParser
-from FirstAndFollow import first_follow
-import Parser
-
-
 def create_parse_table(first:dict, follow:dict, productions : dict, terminal: list, non_terminal:list):
     parsed_table = {}
     for t in non_terminal:
@@ -23,4 +14,11 @@ def create_parse_table(first:dict, follow:dict, productions : dict, terminal: li
                 first_elements = first[nt]
                 for t in first_elements:
                     parsed_table[nt][t.value] = x
+
+    # fill with synch
+    for non_terminal_string, terminal_list in follow.items():
+        for T in terminal_list:
+            if not parsed_table[non_terminal_string].get(T.value) and T.value != '$':
+                parsed_table[non_terminal_string][T.value] = 'synch'
+    print(parsed_table)
     return parsed_table
